@@ -1,0 +1,433 @@
+// Kql.bnf - generated from Kql.g4
+// Only the rules visible in the provided Kql.g4 excerpt are included. Add more as needed.
+
+kqlFile ::= query
+
+query ::= statement (';' statement)* (';')? EOF
+
+statement ::= alias_database_statement
+                   | declare_pattern_statement
+                   | declare_query_parameters_statement
+                   | let_statement
+                   | query_statement
+                   | restrict_access_statement
+                   | set_statement
+
+alias_database_statement ::= ALIAS DATABASE identifier_or_keyword_or_escaped_name '=' unnamed_expression
+
+let_statement ::= let_function_declaration
+                       | let_view_declaration
+                       | let_variable_declaration
+                       | let_materialize_declaration
+                       | let_entity_group_declaration
+
+let_variable_declaration ::= LET identifier_or_keyword_or_escaped_name '=' expression
+
+let_function_declaration ::= LET identifier_or_keyword_or_escaped_name '=' '(' let_function_parameter_list? ')' let_function_body
+
+let_view_declaration ::= LET identifier_or_keyword_or_escaped_name '=' VIEW '(' let_view_parameter_list? ')' let_function_body
+
+let_view_parameter_list ::= scalar_parameter (',' scalar_parameter)*
+
+let_materialize_declaration ::= LET identifier_or_keyword_or_escaped_name '=' MATERIALIZE '(' pipe_expression ')'
+
+let_entity_group_declaration ::= LET identifier_or_keyword_or_escaped_name '=' entity_group_expression
+
+let_function_parameter_list ::= tabular_parameter (',' tabular_parameter)* (',' scalar_parameter)
+                                    | scalar_parameter (',' scalar_parameter)*
+
+scalar_parameter ::= parameter_name ':' scalar_type (scalar_parameter_default)?
+scalar_parameter_default ::= '=' literal_expression
+tabular_parameter ::= parameter_name ':' (tabular_parameter_open_schema | tabular_parameter_row_schema)
+tabular_parameter_open_schema ::= '(' '*' ')'
+tabular_parameter_row_schema ::= '(' tabular_parameter_row_schema_column_declaration (',' tabular_parameter_row_schema_column_declaration)* ')'
+tabular_parameter_row_schema_column_declaration ::= parameter_name ':' scalar_type
+
+let_function_body ::= '{' (let_function_body_statement ';')* (expression)? (';')? '}'
+let_function_body_statement ::= let_statement | declare_query_parameters_statement
+
+declare_pattern_statement ::= DECLARE PATTERN simple_name_reference (declare_pattern_definition)?
+declare_pattern_definition ::= '=' declare_pattern_parameter_list (declare_pattern_path_parameter)? '{' (declare_pattern_rule)+ '}'
+declare_pattern_parameter_list ::= '(' declare_pattern_parameter (',' declare_pattern_parameter)* ')'
+declare_pattern_parameter ::= parameter_name ':' scalar_type
+declare_pattern_path_parameter ::= '[' declare_pattern_parameter ']'
+declare_pattern_rule ::= declare_pattern_rule_argument_list (declare_pattern_rule_path_argument)? '=' declare_pattern_body (';')?
+declare_pattern_rule_argument_list ::= '(' declare_pattern_rule_argument (',' declare_pattern_rule_argument)* ')'
+declare_pattern_rule_path_argument ::= '.' '[' declare_pattern_rule_argument ']'
+declare_pattern_rule_argument ::= string_literal_expression
+declare_pattern_body ::= '{' (let_function_body_statement ';')* expression '}'
+
+restrict_access_statement ::= RESTRICT ACCESS TO '(' restrict_access_statement_entity (',' restrict_access_statement_entity)* ')'
+restrict_access_statement_entity ::= simple_name_reference | wildcarded_entity_expression
+
+set_statement ::= SET identifier_or_keyword_name ('=' set_statement_option_value)?
+set_statement_option_value ::= identifier_or_keyword_name | literal_expression
+
+declare_query_parameters_statement ::= DECLARE QUERYPARAMETERS '(' declare_query_parameters_statement_parameter (',' declare_query_parameters_statement_parameter)* ')'
+declare_query_parameters_statement_parameter ::= parameter_name ':' scalar_type (scalar_parameter_default)?
+
+query_statement ::= expression
+
+expression ::= pipe_expression
+pipe_expression ::= before_pipe_expression (piped_operator)*
+piped_operator ::= '|' after_pipe_operator
+before_pipe_expression ::= before_or_after_pipe_operator | print_operator | macro_expand_operator | range_expression | scoped_function_call_expression | unnamed_expression
+after_pipe_operator ::= as_operator | assert_schema_operator | consume_operator | count_operator | distinct_operator | execute_and_cache_operator | extend_operator | facet_by_operator | find_operator | fork_operator | get_schema_operator | graph_mark_components_operator | graph_match_operator | graph_merge_operator | graph_shortest_paths_operator | graph_to_table_operator | invoke_operator | join_operator | lookup_operator | make_graph_operator | make_series_operator | mvexpand_operator | mvapply_operator | evaluate_operator | parse_operator | parse_kv_operator | parse_where_operator | partition_operator | partition_by_operator | project_operator | project_away_operator | project_rename_operator | project_reorder_operator | project_keep_operator | reduce_by_operator | render_operator | sample_operator | sample_distinct_operator | scan_operator | search_operator | serialize_operator | sort_operator | summarize_operator | take_operator | top_hitters_operator | top_operator | top_nested_operator | union_operator | where_operator
+pipe_sub_expression ::= after_pipe_operator (piped_operator)*
+before_or_after_pipe_operator ::= find_operator | search_operator | union_operator | evaluate_operator
+fork_pipe_operator ::= count_operator | extend_operator | where_operator | parse_operator | parse_where_operator | take_operator | top_nested_operator | project_operator | project_away_operator | project_rename_operator | project_reorder_operator | project_keep_operator | summarize_operator | distinct_operator | top_hitters_operator | top_operator | sort_operator | mvexpand_operator | reduce_by_operator | sample_operator | sample_distinct_operator | as_operator | invoke_operator | execute_and_cache_operator | scan_operator
+
+// --- Operators ---
+as_operator ::= AS (relaxed_query_operator_parameter)* identifier_or_keyword_or_escaped_name
+
+assert_schema_operator ::= ASSERTSCHEMA row_schema
+
+consume_operator ::= CONSUME (relaxed_query_operator_parameter)*
+
+count_operator ::= COUNT (relaxed_query_operator_parameter)*
+
+distinct_operator ::= DISTINCT (relaxed_query_operator_parameter)* (distinct_operator_star_target | distinct_operator_column_list_target)
+distinct_operator_star_target ::= '*'
+distinct_operator_column_list_target ::= unnamed_expression (',' unnamed_expression)*
+
+evaluate_operator ::= EVALUATE (relaxed_query_operator_parameter)* function_call_expression (evaluate_operator_schema_clause)?
+evaluate_operator_schema_clause ::= ':' row_schema
+
+extend_operator ::= EXTEND named_expression (',' named_expression)*
+
+execute_and_cache_operator ::= EXECUTE_AND_CACHE
+
+facet_by_operator ::= FACET BY entity_expression (',' entity_expression)* (facet_by_operator_with_operator_clause | facet_by_operator_with_expression_clause)?
+facet_by_operator_with_operator_clause ::= WITH fork_pipe_operator
+facet_by_operator_with_expression_clause ::= WITH '(' fork_operator_expression ')'
+
+find_operator ::= FIND (data_scope_clause)? (find_operator_parameters_where_clause)? unnamed_expression (find_operator_project_clause | find_operator_project_smart_clause)? (find_operator_project_away_clause)?
+find_operator_parameters_where_clause ::= (relaxed_query_operator_parameter)* (find_operator_in_clause)? WHERE
+find_operator_in_clause ::= IN '(' find_operator_source (',' find_operator_source)* ')'
+find_operator_project_clause ::= PROJECT find_operator_project_expression (',' find_operator_project_expression)*
+find_operator_project_expression ::= find_operator_column_expression | find_operator_pack_expression
+find_operator_column_expression ::= parameter_name (find_operator_optional_column_type)?
+find_operator_optional_column_type ::= ':' extended_scalar_type
+find_operator_pack_expression ::= PACK '(' '*' ')'
+find_operator_project_smart_clause ::= PROJECTSMART
+find_operator_project_away_clause ::= PROJECTAWAY_ (find_operator_project_away_star | find_operator_project_away_column_list)
+find_operator_project_away_star ::= '*'
+find_operator_project_away_column_list ::= find_operator_column_expression (',' find_operator_column_expression)*
+find_operator_source ::= find_operator_source_entity_expression | wildcarded_entity_expression
+find_operator_source_entity_expression ::= entity_name_reference ('|' as_operator)*
+
+fork_operator ::= FORK fork_operator_fork+
+fork_operator_fork ::= (fork_operator_expression_name)? '(' fork_operator_expression ')'
+fork_operator_expression_name ::= identifier_or_keyword_or_escaped_name '='
+fork_operator_expression ::= fork_pipe_operator (fork_operator_piped_operator)*
+fork_operator_piped_operator ::= '|' fork_pipe_operator
+
+get_schema_operator ::= GETSCHEMA
+
+graph_mark_components_operator ::= GRAPHMARKCOMPONENTS (relaxed_query_operator_parameter)*
+
+graph_match_operator ::= GRAPHMATCH (relaxed_query_operator_parameter)* graph_match_pattern (',' graph_match_pattern) (graph_match_where_clause)? (graph_match_project_clause)?
+graph_match_pattern ::= graph_match_pattern_node | graph_match_pattern_unnamed_edge | graph_match_pattern_named_edge
+graph_match_pattern_node ::= '(' identifier_or_keyword_or_escaped_name ')'
+graph_match_pattern_unnamed_edge ::= (DASHDASH_GREATERTHAN | LESSTHAN_DASHDASH | DASHDASH)
+graph_match_pattern_named_edge ::= (DASH_OPENBRACKET | LESSTHAN_DASH_OPENBRACKET) identifier_or_keyword_or_escaped_name (graph_match_pattern_range)? (CLOSEBRACKET_DASH_GREATERTHAN | CLOSEBRACKET_DASH)
+graph_match_pattern_range ::= ASTERISK invocation_expression DOTDOT invocation_expression
+graph_match_where_clause ::= WHERE expression
+graph_match_project_clause ::= PROJECT named_expression (',' named_expression)*
+
+graph_merge_operator ::= GRAPHMERGE invocation_expression (join_operator_on_clause)?
+graph_to_table_operator ::= GRAPHTOTABLE graph_to_table_output (',' graph_to_table_output)
+graph_to_table_output ::= (NODES | EDGES) (graph_to_table_as_clause)? (relaxed_query_operator_parameter)*
+graph_to_table_as_clause ::= AS identifier_or_keyword_or_escaped_name
+
+graph_shortest_paths_operator ::= GRAPHSHORTESTPATHS (relaxed_query_operator_parameter)* graph_match_pattern (',' graph_match_pattern) (graph_match_where_clause)? (graph_match_project_clause)?
+
+invoke_operator ::= INVOKE dot_composite_function_call_expression
+
+join_operator ::= JOIN (relaxed_query_operator_parameter)* unnamed_expression (join_operator_on_clause | join_operator_where_clause)?
+join_operator_on_clause ::= ON (unnamed_expression (',' unnamed_expression)*)?
+join_operator_where_clause ::= WHERE unnamed_expression
+
+lookup_operator ::= LOOKUP (relaxed_query_operator_parameter)* unnamed_expression join_operator_on_clause
+
+macro_expand_operator ::= MACROEXPAND (relaxed_query_operator_parameter)* macro_expand_entity_group AS identifier_or_keyword_or_escaped_name '(' statement (';' statement)* (';')? ')'
+macro_expand_entity_group ::= entity_group_expression | simple_name_reference | entity_expression
+
+entity_group_expression ::= ENTITYGROUP "[" unnamed_expression ("," unnamed_expression)* "]"
+
+make_graph_operator ::= MAKEGRAPH (relaxed_query_operator_parameter)* simple_name_reference (DASHDASH_GREATERTHAN | DASHDASH) simple_name_reference (make_graph_id_clause | make_graph_tables_and_keys_clause)? (make_graph_partitioned_by_clause)?
+make_graph_id_clause ::= WITH_NODE_ID '=' identifier_or_keyword_or_escaped_name
+make_graph_tables_and_keys_clause ::= WITH invocation_expression ON simple_name_reference
+make_graph_partitioned_by_clause ::= PARTITIONEDBY entity_path_or_element_expression '(' contextual_sub_expression ')'
+
+make_series_operator ::= MAKESERIES (relaxed_query_operator_parameter)* make_series_operator_aggregation (',' make_series_operator_aggregation)* make_series_operator_on_clause (make_series_operator_in_range_clause | make_series_operator_from_to_step_clause) (make_series_operator_by_clause)?
+make_series_operator_on_clause ::= ON named_expression
+make_series_operator_aggregation ::= named_expression (make_series_operator_expression_default_clause)?
+make_series_operator_expression_default_clause ::= DEFAULT '=' named_expression
+make_series_operator_in_range_clause ::= IN RANGE '(' named_expression ',' named_expression ',' named_expression ')'
+make_series_operator_from_to_step_clause ::= (FROM named_expression)? (TO named_expression)? STEP named_expression
+make_series_operator_by_clause ::= BY named_expression (',' named_expression)*
+
+print_operator ::= PRINT named_expression (',' named_expression)*
+search_operator ::= 'SEARCH'
+    (relaxed_query_operator_parameter)*
+    (data_scope_clause)?
+    (search_operator_in_clause)?
+    (
+        unnamed_expression
+        | star_expression
+        | search_operator_star_and_expression
+    )
+search_operator_star_and_expression ::= '*' AND unnamed_expression
+
+search_operator_in_clause ::= IN '(' find_operator_source (',' find_operator_source)* ')'
+
+// --- Expressions ---
+named_expression ::= (named_expression_name_clause)? unnamed_expression
+named_expression_name_clause ::= (identifier_or_extended_keyword_or_escaped_name | named_expression_name_list) '='
+named_expression_name_list ::= '(' identifier_or_extended_keyword_or_escaped_name (',' identifier_or_extended_keyword_or_escaped_name)* ')'
+scoped_function_call_expression ::= simple_name_reference '.' function_call_expression
+unnamed_expression ::= logical_or_expression
+logical_or_expression ::= logical_and_expression (logical_or_operation)*
+logical_or_operation ::= OR logical_and_expression
+logical_and_expression ::= equality_expression (logical_and_operation)*
+logical_and_operation ::= AND equality_expression
+equality_expression ::= relational_expression | equals_equality_expression | list_equality_expression | between_equality_expression | star_equality_expression
+equals_equality_expression ::= relational_expression (('==' | '<>' | '!=') relational_expression)
+list_equality_expression ::= relational_expression (IN | NOT_IN | IN_CI | NOT_IN_CI | HAS_ANY | HAS_ALL) '(' invocation_expression (',' invocation_expression)* ')'
+between_equality_expression ::= relational_expression (BETWEEN | NOT_BETWEEN) '(' invocation_expression '..' invocation_expression ')'
+star_equality_expression ::= '*' '==' relational_expression
+relational_expression ::= additive_expression (('<' | '>' | '<=' | '>=') additive_expression)?
+additive_expression ::= multiplicative_expression (additive_operation)*
+additive_operation ::= ('+' | '-') multiplicative_expression
+multiplicative_expression ::= string_operator_expression (multiplicative_operation)*
+multiplicative_operation ::= ('*' | '/' | '%') string_operator_expression
+string_operator_expression ::= string_binary_operator_expression | string_star_operator_expression
+string_binary_operator_expression ::= invocation_expression (string_binary_operation)*
+string_binary_operation ::= (string_binary_operator | ':') invocation_expression
+string_binary_operator ::= '=~' | '!~' | HAS | NOT_HAS | HAS_CS | NOT_HAS_CS | HASPREFIX | NOT_HASPREFIX | HASPREFIX_CS | NOT_HASPREFIX_CS | HASSUFFIX | NOT_HASSUFFIX | HASSUFFIX_CS | NOT_HASSUFFIX_CS | LIKE | NOTLIKE | LIKECS | NOTLIKECS | CONTAINS | NOTCONTAINS | CONTAINSCS | NOTCONTAINSCS | NOT_CONTAINS | CONTAINS_CS | NOT_CONTAINS_CS | STARTSWITH | NOT_STARTSWITH | STARTSWITH_CS | NOT_STARTSWITH_CS | ENDSWITH | NOT_ENDSWITH | ENDSWITH_CS | NOT_ENDSWITH_CS | MATCHES_REGEX
+string_star_operator_expression ::= '*' string_binary_operator invocation_expression
+invocation_expression ::= (('+' | '-')? function_call_or_path_expression)
+function_call_or_path_expression ::= function_call_or_path_root | function_call_or_path_path_expression | to_table_expression
+function_call_or_path_root ::= dot_composite_function_call_expression | primary_expression | to_scalar_expression
+function_call_or_path_path_expression ::= function_call_or_path_root (function_call_or_path_operation)+
+function_call_or_path_operation ::= functional_call_or_path_path_operation | function_call_or_path_element_operation | legacy_function_call_or_path_element_operation
+functional_call_or_path_path_operation ::= '.' identifier_or_keyword_or_escaped_name
+function_call_or_path_element_operation ::= '[' unnamed_expression ']'
+legacy_function_call_or_path_element_operation ::= '.' '[' unnamed_expression ']'
+to_scalar_expression ::= TOSCALAR (no_optimization_parameter)? '(' pipe_expression ')'
+to_table_expression ::= TOTABLE (no_optimization_parameter)? '(' pipe_expression ')'
+no_optimization_parameter ::= KIND '=' NOOPTIMIZATION
+dot_composite_function_call_expression ::= function_call_expression (dot_composite_function_call_operation)*
+dot_composite_function_call_operation ::= '.' function_call_expression
+function_call_expression ::= named_function_call_expression | count_expression
+named_function_call_expression ::= simple_name_reference '(' (argument_expression (',' argument_expression)*)? ')'
+argument_expression ::= named_expression | star_expression
+count_expression ::= COUNT '(' (named_expression)? ')'
+star_expression ::= '*'
+primary_expression ::= unsigned_literal_expression | name_reference_with_data_scope | data_table_expression | external_data_expression | contextual_data_table_expression | materialized_view_combine_expression | parenthesized_expression
+name_reference_with_data_scope ::= simple_name_reference (data_scope_clause)?
+data_scope_clause ::= DATASCOPE '=' (HOTCACHE | ALL)
+parenthesized_expression ::= '(' expression ')'
+range_expression ::= RANGE simple_name_reference FROM unnamed_expression TO unnamed_expression STEP unnamed_expression
+
+// --- Literals, Names, Types, and Supporting Rules ---
+literal_expression ::= signed_literal_expression | unsigned_literal_expression
+unsigned_literal_expression ::= long_literal_expression | int_literal_expression | real_literal_expression | decimal_literal_expression | date_time_literal_expression | time_span_literal_expression | boolean_literal_expression | guid_literal_expression | type_literal_expression | string_literal_expression | dynamic_literal_expression
+number_like_literal_expression ::= long_literal_expression | int_literal_expression | real_literal_expression | decimal_literal_expression | signed_literal_expression | date_time_literal_expression | time_span_literal_expression
+numeric_literal_expression ::= long_literal_expression | int_literal_expression | real_literal_expression | decimal_literal_expression | signed_literal_expression
+signed_literal_expression ::= signed_long_literal_expression | signed_real_literal_expression
+long_literal_expression ::= LONGLITERAL
+int_literal_expression ::= INTLITERAL
+real_literal_expression ::= REALLITERAL
+decimal_literal_expression ::= DECIMALLITERAL
+date_time_literal_expression ::= DATETIMELITERAL
+time_span_literal_expression ::= TIMESPANLITERAL
+boolean_literal_expression ::= BOOLEANLITERAL
+guid_literal_expression ::= GUIDLITERAL
+type_literal_expression ::= TYPELITERAL
+signed_long_literal_expression ::= ('+' | '-') LONGLITERAL
+signed_real_literal_expression ::= ('+' | '-') REALLITERAL
+string_literal_expression ::= STRINGLITERAL+
+dynamic_literal_expression ::= DYNAMIC '(' json_value ')'
+
+json_value ::= json_array | json_boolean | json_date_time | json_guid | json_long | json_null | json_object | json_real | json_string | json_time_span | dynamic_literal_expression
+json_object ::= '{' (json_pair (',' json_pair)*)? '}'
+json_pair ::= STRINGLITERAL ':' json_value
+json_array ::= '[' (json_value (',' json_value)*)? ']'
+json_boolean ::= BOOLEANLITERAL
+json_date_time ::= DATETIMELITERAL
+json_guid ::= GUIDLITERAL
+json_null ::= NULL
+json_string ::= STRINGLITERAL+
+json_time_span ::= TIMESPANLITERAL
+json_long ::= ('-')? LONGLITERAL
+json_real ::= ('-')? REALLITERAL
+
+// --- Names, References, Types ---
+parameter_name ::= identifier_or_extended_keyword_or_escaped_name
+simple_name_reference ::= identifier_or_keyword_or_escaped_name
+extended_name_reference ::= identifier_or_extended_keyword_or_escaped_name
+wildcarded_name_reference ::= wildcarded_name
+simple_or_wildcarded_name_reference ::= simple_name_reference | wildcarded_name_reference
+identifier_name ::= IDENTIFIER
+keyword_name ::= ACCESS | AGGREGATIONS | ALIAS | ALL | AXES | BASE | BIN | BOOL | CLUSTER | DATABASE | DECLARE | DEFAULT | DELTA | EDGES | EVALUATE | EXECUTE | FACET | FORK | FROM | GUID | HIDDEN_ | HOT | HOTDATA | HOTINDEX | ID | INTO | LEGEND | LET | LINEAR | LOG | LOOKUP | LIST | MAP | NODES | NONE | NULL | NULLS | ON | OPTIONAL | OUTPUT | PACK | PARTITION | PARTITIONBY | PATTERN | PLUGIN | QUERYPARAMETERS | RANGE | REDUCE | REPLACE | RENDER | RESTRICT | SERIES | STACKED | STACKED100 | STEP | THRESHOLD | TYPEOF | UNSTACKED | UUID | VIEW | VISIBLE | WITH | XAXIS | XCOLUMN | XMAX | XMIN | XTITLE | YAXIS | YCOLUMNS | YMAX | YMIN | YTITLE | YSPLIT
+extended_keyword_name ::= ACCUMULATE | AS | BY | CONTAINS | CONSUME | COUNT | DATATABLE | DISTINCT | EXTEND | EXTERNALDATA | FIND | FILTER | HAS | IN | INVOKE | LIMIT | MATERIALIZE | OF | PARSE | PRINT | SAMPLE | SAMPLE_DISTINCT | SCAN | SEARCH | SERIALIZE | SET | SORT | SUMMARIZE | TAKE | TITLE | TO | TOP | TOSCALAR | TOTABLE | TOP_NESTED | TOP_HITTERS | WHERE
+escaped_name ::= '[' string_literal_expression ']'
+identifier_or_keyword_name ::= identifier_name | keyword_name
+identifier_or_keyword_or_escaped_name ::= identifier_name | keyword_name | escaped_name
+identifier_or_extended_keyword_or_escaped_name ::= identifier_name | keyword_name | extended_keyword_name | escaped_name
+identifier_or_extended_keyword_name ::= identifier_name | keyword_name | extended_keyword_name
+wildcarded_name ::= (wildcarded_name_prefix)? '*' (wildcarded_name_segment)*
+wildcarded_name_prefix ::= IDENTIFIER | keyword_name | extended_keyword_name
+wildcarded_name_segment ::= IDENTIFIER | keyword_name | extended_keyword_name | LONGLITERAL | '*'
+
+scalar_type ::= BOOL | BOOLEAN | DATE | DATETIME | DECIMAL | DOUBLE | DYNAMIC | GUID | INT | INT64 | INT8 | LONG | REAL | STRING | TIME | TIMESPAN | UNIQUEID
+extended_scalar_type ::= BOOL | BOOLEAN | DATE | DATETIME | DECIMAL | DOUBLE | DYNAMIC | FLOAT | GUID | INT | INT16 | INT32 | INT64 | INT8 | LONG | REAL | STRING | TIME | TIMESPAN | UINT | UINT16 | UINT32 | UINT64 | UINT8 | ULONG | UNIQUEID
+
+// --- Entity, Schema, Data Table, and Miscellaneous Rules ---
+entity_expression ::= entity_name_reference | entity_path_or_element_expression
+entity_path_or_element_expression ::= entity_name_reference (entity_path_or_element_operator)+
+entity_path_or_element_operator ::= entity_path_operator | entity_element_operator | legacy_entity_path_element_operator
+entity_path_operator ::= '.' entity_name
+entity_element_operator ::= '[' unnamed_expression ']'
+legacy_entity_path_element_operator ::= '.' '[' unnamed_expression ']'
+entity_name ::= at_sign_name | identifier_or_extended_keyword_or_escaped_name | extended_path_name
+entity_name_reference ::= entity_name
+at_sign_name ::= '@'
+extended_path_name ::= KIND | WITHSOURCE | WITH_SOURCE
+wildcarded_entity_expression ::= wildcarded_name_reference | dot_composite_function_call_expression | wildcarded_path_expression
+wildcarded_path_expression ::= dot_composite_function_call_expression '.' wildcarded_path_name
+wildcarded_path_name ::= wildcarded_name | entity_name
+
+contextual_data_table_expression ::= CONTEXTUAL_DATATABLE GUIDLITERAL row_schema
+data_table_expression ::= DATATABLE (relaxed_query_operator_parameter)* row_schema '[' (literal_expression (',' literal_expression)* (',')?)? ']'
+row_schema ::= '(' (row_schema_column_declaration (',' row_schema_column_declaration)* (',')?)? ')'
+row_schema_column_declaration ::= parameter_name ':' scalar_type
+external_data_expression ::= (EXTERNALDATA | EXTERNAL_DATA) (relaxed_query_operator_parameter)* row_schema '[' string_literal_expression (',' string_literal_expression)* ']' (external_data_with_clause)?
+external_data_with_clause ::= WITH '(' (external_data_with_clause_property (',' external_data_with_clause_property)* (',')?)? ')'
+external_data_with_clause_property ::= parameter_name '=' (string_literal_expression | LONGLITERAL | REALLITERAL | BOOLEANLITERAL | DATETIMELITERAL | TYPELITERAL | GUIDLITERAL | RAWGUIDLITERAL | parameter_name)
+materialized_view_combine_expression ::= MATERIALIZED_VIEW_COMBINE '(' string_literal_expression ')' materialize_view_combine_base_clause materialized_view_combine_delta_clause materialized_view_combine_aggregations_clause
+materialize_view_combine_base_clause ::= BASE '(' expression ')'
+materialized_view_combine_delta_clause ::= DELTA '(' expression ')'
+materialized_view_combine_aggregations_clause ::= AGGREGATIONS '(' summarize_operator ')'
+
+union_operator ::= UNION (relaxed_query_operator_parameter)* union_operator_expression (',' union_operator_expression)*
+union_operator_expression ::= wildcarded_entity_expression | entity_name_reference | parenthesized_expression
+
+parse_operator ::= PARSE (parse_operator_kind_clause)? unnamed_expression WITH parse_operator_pattern
+parse_operator_kind_clause ::= KIND '=' (SIMPLE | REGEX | RELAXED) (parse_operator_flags_clause)?
+parse_operator_flags_clause ::= FLAGS '=' IDENTIFIER
+parse_operator_pattern ::= (parse_operator_name_and_optional_type)? (parse_operator_pattern_segment)* ('*')?
+parse_operator_name_and_optional_type ::= simple_name_reference (':' scalar_type)?
+parse_operator_pattern_segment ::= ('*')? string_literal_expression (parse_operator_name_and_optional_type)?
+
+parse_where_operator ::= PARSEWHERE (parse_operator_kind_clause)? unnamed_expression WITH parse_operator_pattern
+
+where_operator ::= (FILTER | WHERE) (strict_query_operator_parameter)* named_expression
+
+relaxed_query_operator_parameter ::= (IDENTIFIER | BAGEXPANSION | BIN_LEGACY | CROSSCLUSTER__ | CROSSDB__ | DECODEBLOCKS | EXPANDOUTPUT | HINT_CONCURRENCY | HINT_DISTRIBUTION | HINT_MATERIALIZED | HINT_NUM_PARTITIONS | HINT_PASS_FILTERS | HINT_PASS_FILTERS_COLUMN | HINT_PROGRESSIVE_TOP | HINT_REMOTE | HINT_SUFFLEKEY | HINT_SPREAD | HINT_STRATEGY | ISFUZZY | ISFUZZY__ | ID__ | KIND | PACKEDCOLUMN__ | SOURCECOLUMNINDEX__ | WITH_ITEM_INDEX | WITH_MATCH_ID | WITH_STEP_NAME | WITHSOURCE | WITH_SOURCE | WITHNOSOURCE__)
+    '=' (identifier_or_keyword_name | literal_expression)
+
+strict_query_operator_parameter ::= (BAGEXPANSION | BIN_LEGACY | CROSSCLUSTER__ | CROSSDB__ | DECODEBLOCKS | EXPANDOUTPUT | HINT_CONCURRENCY | HINT_DISTRIBUTION | HINT_MATERIALIZED | HINT_NUM_PARTITIONS | HINT_PASS_FILTERS | HINT_PASS_FILTERS_COLUMN | HINT_PROGRESSIVE_TOP | HINT_REMOTE | HINT_SUFFLEKEY | HINT_SPREAD | HINT_STRATEGY | ISFUZZY | ISFUZZY__ | ID__ | KIND | PACKEDCOLUMN__ | SOURCECOLUMNINDEX__ | WITH_ITEM_INDEX | WITH_MATCH_ID | WITH_STEP_NAME | WITHSOURCE | WITH_SOURCE | WITHNOSOURCE__)
+    '=' (identifier_or_keyword_name | literal_expression)
+
+take_operator ::= (LIMIT | TAKE) (strict_query_operator_parameter)* named_expression
+
+top_nested_operator ::= TOP_NESTED (named_expression)? OF named_expression (top_nested_operator_with_others_clause)? BY ordered_expression
+
+top_nested_operator_with_others_clause ::= WITH OTHERS '=' named_expression
+
+project_operator ::= PROJECT (named_expression (',' named_expression)*)?
+
+project_away_operator ::= PROJECTAWAY (simple_or_wildcarded_name_reference (',' simple_or_wildcarded_name_reference)*)?
+
+project_rename_operator ::= PROJECTRENAME (named_expression (',' named_expression)*)?
+
+project_reorder_operator ::= PROJECTREORDER (project_reorder_expression (',' project_reorder_expression)*)?
+
+project_reorder_expression ::= simple_or_wildcarded_name_reference ((ASC | DESC | GRANNYASC | GRANNYDESC))?
+
+project_keep_operator ::= PROJECTKEEP simple_or_wildcarded_name_reference (',' simple_or_wildcarded_name_reference)*
+
+summarize_operator ::= SUMMARIZE (strict_query_operator_parameter)* (named_expression (',' named_expression)*)? (summarize_operator_by_clause)?
+
+summarize_operator_by_clause ::= BY named_expression (',' named_expression) (summarize_operator_legacy_bin_clause)?
+
+summarize_operator_legacy_bin_clause ::= BIN '=' number_like_literal_expression
+
+top_hitters_operator ::= TOP_HITTERS named_expression OF named_expression (top_hitters_operator_by_clause)?
+
+top_hitters_operator_by_clause ::= BY ordered_expression
+
+top_operator ::= TOP (strict_query_operator_parameter)* named_expression BY ordered_expression
+
+sort_operator ::= (SORT | ORDER) (relaxed_query_operator_parameter)* BY ordered_expression (',' ordered_expression)*
+
+ordered_expression ::= named_expression sort_ordering
+
+sort_ordering ::= (ASC | DESC)? (NULLS (FIRST | LAST))?
+
+mvexpand_operator ::= (MVEXPAND | MV_EXPAND) (strict_query_operator_parameter)* mvexpand_operator_expression (',' mvexpand_operator_expression)* (mvapply_operator_limit_clause)?
+
+mvexpand_operator_expression ::= named_expression (mvapply_operator_expression_to_clause)?
+
+mvapply_operator_expression_to_clause ::= TO TYPELITERAL
+
+mvapply_operator ::= (MVAPPLY | MV_APPLY) (strict_query_operator_parameter)* mvapply_operator_expression (',' mvapply_operator_expression)* (mvapply_operator_limit_clause)? (mvapply_operator_id_clause)? ON '(' contextual_sub_expression ')'
+
+mvapply_operator_limit_clause ::= LIMIT LONGLITERAL
+
+mvapply_operator_id_clause ::= ID GUIDLITERAL
+
+mvapply_operator_expression ::= named_expression (mvapply_operator_expression_to_clause)?
+
+reduce_by_operator ::= REDUCE (strict_query_operator_parameter)* BY named_expression (reduce_by_with_clause)?
+
+reduce_by_with_clause ::= WITH named_expression (',' named_expression)*
+
+sample_operator ::= SAMPLE (strict_query_operator_parameter)* named_expression
+
+sample_distinct_operator ::= SAMPLE_DISTINCT (strict_query_operator_parameter)* named_expression OF named_expression
+
+scan_operator ::= SCAN (relaxed_query_operator_parameter)* (scan_operator_order_by_clause)? (scan_operator_partition_by_clause)? (scan_operator_declare_clause)? WITH '(' scan_operator_step+ ')'
+
+scan_operator_order_by_clause ::= ORDER BY ordered_expression (',' ordered_expression)*
+
+scan_operator_partition_by_clause ::= PARTITION BY unnamed_expression (',' unnamed_expression)*
+
+scan_operator_declare_clause ::= DECLARE '(' scalar_parameter (',' scalar_parameter)* ')'
+
+scan_operator_step ::= STEP parameter_name (OPTIONAL)? (scan_operator_step_output_clause)? ':' unnamed_expression (scan_operator_body)? ';'
+
+scan_operator_step_output_clause ::= OUTPUT '=' (ALL | LAST | NONE)
+
+scan_operator_body ::= '=>' scan_operator_assignment (',' scan_operator_assignment)*
+
+scan_operator_assignment ::= parameter_name '=' unnamed_expression
+
+parse_kv_operator ::= PARSEKV unnamed_expression row_schema (parse_kv_with_clause)?
+parse_kv_with_clause ::= WITH '(' query_operator_property (',' query_operator_property)* ')'
+
+partition_operator ::= PARTITION (relaxed_query_operator_parameter)* BY entity_expression (partition_operator_in_clause)? (partition_operator_sub_expression_body | partition_operator_full_expression_body)
+partition_operator_in_clause ::= IN (function_call_expression | dynamic_literal_expression)
+partition_operator_sub_expression_body ::= '(' pipe_sub_expression ')'
+partition_operator_full_expression_body ::= '{' pipe_expression '}'
+
+partition_by_operator ::= PARTITIONBY (relaxed_query_operator_parameter)* entity_expression (partition_by_operator_id_clause)? '(' contextual_sub_expression ')'
+partition_by_operator_id_clause ::= ID GUIDLITERAL
+
+render_operator ::= RENDER (TABLE | LIST | BARCHART | PIECHART | LADDERCHART | TIMECHART | LINECHART | ANOMALYCHART | PIVOTCHART | AREACHART | STACKEDAREACHART | SCATTERCHART | TIMEPIVOT | COLUMNCHART | TIMELINE | CHART3D_ | CARD | TREEMAP | IDENTIFIER) (render_operator_with_clause | render_operator_legacy_property_list)?
+render_operator_with_clause ::= WITH '(' (render_operator_property (',' render_operator_property)*)? ')'
+render_operator_legacy_property_list ::= render_operator_legacy_property+
+render_operator_property ::= TITLE '=' function_call_or_path_expression | XCOLUMN '=' simple_name_reference | SERIES '=' render_property_name_list | YCOLUMNS '=' render_property_name_list | ANOMALYCOLUMNS '=' render_property_name_list | KIND '=' (DEFAULT | UNSTACKED | STACKED | STACKED100 | MAP) | XTITLE '=' function_call_or_path_expression | YTITLE '=' function_call_or_path_expression | XAXIS '=' (LINEAR | LOG) | YAXIS '=' (LINEAR | LOG) | LEGEND '=' (VISIBLE | HIDDEN_) | YSPLIT '=' (NONE | AXES | PANELS) | ACCUMULATE '=' BOOLEANLITERAL | YMIN '=' numeric_literal_expression | YMAX '=' numeric_literal_expression | XMIN '=' literal_expression | XMAX '=' literal_expression
+render_property_name_list ::= extended_name_reference (',' extended_name_reference)*
+render_operator_legacy_property ::= TITLE '=' string_literal_expression | KIND '=' (DEFAULT | UNSTACKED | STACKED | STACKED100 | MAP) | WITH string_literal_expression | BY render_property_name_list | ACCUMULATE '=' BOOLEANLITERAL
+
+serialize_operator ::= SERIALIZE (strict_query_operator_parameter)* named_expression (',' named_expression)*
+
+query_operator_property ::= IDENTIFIER '=' (identifier_or_keyword_name | literal_expression)
+
+contextual_sub_expression ::= pipe_sub_expression | contextual_pipe_expression
+contextual_pipe_expression ::= contextual_data_table_expression (contextual_pipe_expression_piped_operator)*
+contextual_pipe_expression_piped_operator ::= '|' after_pipe_operator
